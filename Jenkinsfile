@@ -1,34 +1,47 @@
-#!/usr/bin.env groovy
+#!/usr/bin/env groovy
 
-pipeline {   
+library identifier: 'jenkins-shared-library@master', retriever: modernSCM(
+    [$class: 'GitSCMSource',
+    remote: 'https://github.com/Sercarbar/jenkins-shared-library.git',
+    //credentialsID: 'gitlab-credentials'
+    ]
+)
+
+pipeline {
     agent any
+    tools {
+        maven 'Maven'
+    }
+    environment {
+        IMAGE_NAME = 'nanatwn/demo-app:java-maven-1.0'
+    }
     stages {
-        stage("test") {
+        stage('build app') {
+            steps {
+                echo 'building application jar...'
+                buildJar()
+            }
+        }
+        stage('build image') {
             steps {
                 script {
-                    echo "Testing the application..."
-
+                    echo 'building the docker image...'
+                    buildImage(env.IMAGE_NAME)
+                    dockerLogin()
+                    dockerPush(env.IMAGE_NAME)
                 }
             }
         }
-        stage("build") {
-            steps {
-                script {
-                    echo "Building the application..."
-                }
-            }
-        }
-
         stage("deploy") {
             steps {
                 script {
-                    def dockerCmd = "docker run -d -p 3080:3080 80024952/demo-app:1.0"
+                    echo 'deploying docker image to EC2...'
+                    def dockerCmd = "docker run -p 3080:3080 -d ${IMAGE_NAME}"
                     sshagent(['ec2-server-key']) {
-                        sh "ssh -o StrictHostKeyChecking=no ec2-user@3.71.12.93 ${dockerCmd}"
+                        sh "ssh -o StrictHostKeyChecking=no ec2-user@18.184.54.160 ${dockerCmd}"
                     }
-                    echo "Deploying the application..."
                 }
             }
-        }               
+        }
     }
-} 
+}
