@@ -61,6 +61,8 @@ pipeline {
                 script {
                     echo 'committing version update to git...'
                     withCredentials([usernamePassword(credentialsId: 'github-credentials', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "git config user.email 'jenkins@example.com'"
+                        sh "git config user.name 'Jenkins CI'"
                         sh 'git remote set-url origin https://${USER}:${PASS}@github.com/Sercarbar/aws-deploy-example.git'
                         sh 'git add .'
                         sh 'git commit -m "ci: version bump"'
