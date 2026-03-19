@@ -1,7 +1,7 @@
 version: '3.0'
 services:
   java-maven-app:
-    image: 80024952/java-maven-app:1.1.0
+    image: ${IMAGE} # Use the IMAGE env variable set in the server-cmds.sh file
     ports:
       - "8080:8080"
   postgres:
